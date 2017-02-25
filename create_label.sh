@@ -2,9 +2,9 @@
 
 set -ueo pipefail
 
-gh_token=$1; shift
-label=$1; shift
-color=$1; shift
+gh_token="$1"; shift
+label="$1"; shift
+color="$1"; shift
 
 msg='{"name": "'$label'", "color": "'$color'"}'
 echo "$msg"
@@ -16,9 +16,9 @@ select yn in "yes" "no"; do
     esac
 done
 
-for proj in dmd druntime phobos tools; do
+for proj in dmd druntime phobos tools installer dlang.org; do
     url=$(curl -fsSL -H "Authorization: token $gh_token" "https://api.github.com/repos/dlang/$proj/labels" \
-                 | jq -r '.[] | select(.name == "'$label'") | .url')
+                 | jq -r ".[] | select(.name == \"$label\") | .url")
     if [ ! -z "$url" ]; then
         curl -fsSL -X PATCH -H "Authorization: token $gh_token" $url \
              --data "$msg" | jq --raw-output '.url'
