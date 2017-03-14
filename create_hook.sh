@@ -7,7 +7,7 @@ hook_url="$1"; shift
 events="$1"; shift
 secret="$1"; shift
 
-config='{"name": "web", "active": true, "events": '$events', "config": {"url": "'$hook_url'", "secret": "'$secret'"}}'
+config='{"name": "web", "active": true, "events": '$events', "config": {"url": "'$hook_url'", "secret": "'$secret'", "content_type": "json"}}'
 echo "$config"
 echo "Does this look correct?"
 select yn in "yes" "no"; do
