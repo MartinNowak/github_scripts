@@ -3,13 +3,20 @@
 set -ueo pipefail
 
 gh_token=$1; shift
-version=$1; shift
+d_version=$1; shift
+dub_version=$1; shift
 date=$1; shift
 
-if ! [[ $version =~ ^[0-9]'.'[0-9][0-9][0-9]'.'[0-9]$"-b"[0-9]+$ ]] &&
-        ! [[ $version =~ ^[0-9]'.'[0-9][0-9][0-9]'.'[0-9]$"-rc"[0-9]+$ ]] &&
-        ! [[ $version =~ ^[0-9]'.'[0-9][0-9][0-9]'.'[0-9]$ ]]; then
-    echo "Unexpected version format '$version'" 1>&2
+if ! [[ $d_version =~ ^[0-9]'.'[0-9][0-9][0-9]'.'[0-9]$"-b"[0-9]+$ ]] &&
+        ! [[ $d_version =~ ^[0-9]'.'[0-9][0-9][0-9]'.'[0-9]$"-rc"[0-9]+$ ]] &&
+        ! [[ $d_version =~ ^[0-9]'.'[0-9][0-9][0-9]'.'[0-9]$ ]]; then
+    echo "Unexpected version format '$d_version'" 1>&2
+    exit 1
+fi
+if ! [[ $dub_version =~ ^[0-9]+'.'[0-9]+'.'[0-9]+$"-beta."[0-9]+$ ]] &&
+        ! [[ $dub_version =~ ^[0-9]+'.'[0-9]+'.'[0-9]+$"-rc."[0-9]+$ ]] &&
+        ! [[ $dub_version =~ ^[0-9]+'.'[0-9]+'.'[0-9]+$ ]]; then
+    echo "Unexpected version format '$dub_version'" 1>&2
     exit 1
 fi
 if ! date -ud "$date"; then
@@ -18,9 +25,11 @@ if ! date -ud "$date"; then
 fi
 
 date=$(date -ud "$date" --iso-8601=seconds | sed 's|+0000$|Z|')
-msg='{"title": "'$version'", "due_on": "'$date'"}'
-echo "$msg"
-echo "Does this look correct?"
+d_msg='{"title": "'$version'", "due_on": "'$date'"}'
+echo "D: $d_msg"
+dub_msg='{"title": "'$dub_version'", "due_on": "'$date'"}'
+echo "dub: $dub_msg"
+echo "Do these look correct?"
 select yn in "yes" "no"; do
     case $yn in
         yes ) break;;
@@ -28,9 +37,16 @@ select yn in "yes" "no"; do
     esac
 done
 
-for proj in dmd druntime phobos dlang.org installer tools; do
+for proj in dmd druntime phobos dlang.org installer tools dub; do
+    if [ $proj == dub ]; then
+        ver=$dub_version
+        msg=$dub_msg
+    else
+        ver=$d_version
+        msg=$d_msg
+    fi
     url=$(curl -fsSL -H "Authorization: token $gh_token" "https://api.github.com/repos/dlang/$proj/milestones" \
-                 | jq -r '.[] | select(.title == "'$version'") | .url')
+              | jq -r '.[] | select(.title == "'$ver'") | .url')
     if [ ! -z "$url" ]; then
         curl -fsSL -X PATCH -H "Authorization: token $gh_token" $url \
              --data "$msg" | jq --raw-output '.html_url'
