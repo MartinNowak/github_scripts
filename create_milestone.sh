@@ -25,7 +25,7 @@ if ! date -ud "$date"; then
 fi
 
 date=$(date -ud "$date" --iso-8601=seconds | sed 's|+0000$|Z|')
-d_msg='{"title": "'$version'", "due_on": "'$date'"}'
+d_msg='{"title": "'$d_version'", "due_on": "'$date'"}'
 echo "D: $d_msg"
 dub_msg='{"title": "'$dub_version'", "due_on": "'$date'"}'
 echo "dub: $dub_msg"
